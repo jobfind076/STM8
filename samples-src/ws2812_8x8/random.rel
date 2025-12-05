@@ -1,0 +1,53 @@
+XH3
+H B areas 6 global symbols
+M random
+O -mstm8
+S __mulint Ref000000
+S .__.ABS. Def000000
+A _CODE size 0 flags 0 addr 0
+A DATA size 0 flags 0 addr 0
+A INITIALIZED size 2 flags 0 addr 0
+A DABS size 0 flags 8 addr 0
+A HOME size 0 flags 0 addr 0
+A GSINIT size 0 flags 0 addr 0
+A GSFINAL size 0 flags 0 addr 0
+A CONST size 0 flags 0 addr 0
+A INITIALIZER size 2 flags 0 addr 0
+A CODE size 34 flags 0 addr 0
+S _rand Def000000
+S _rand_byte Def00001D
+S _init_rand Def000017
+S _random Def000022
+A CABS size 0 flags 8 addr 0
+T 00 00 00
+R 00 00 00 02
+T 00 00 00
+R 00 00 00 02
+T 00 00 00
+R 00 00 00 09
+T 00 00 00 CE 00 00 89 4B 6D 4B 4E CD 00 00 5B 04
+R 00 00 00 09 10 04 00 02 02 0C 00 00
+T 00 00 0D 1C 30 39 CF 00 00 CE 00 00 81
+R 00 00 00 09 10 07 00 02 10 0A 00 02
+T 00 00 17
+R 00 00 00 09
+T 00 00 17 1E 03 CF 00 00 81
+R 00 00 00 09 10 06 00 02
+T 00 00 1D
+R 00 00 00 09
+T 00 00 1D CD 00 00 9F 81
+R 00 00 00 09 00 04 00 09
+T 00 00 22
+R 00 00 00 09
+T 00 00 22 CD 00 00 72 FB 03 16 05 65 93 13 03 25
+R 00 00 00 09 00 04 00 09
+T 00 00 2F 01 81
+R 00 00 00 09
+T 00 00 31
+R 00 00 00 09
+T 00 00 31 1E 03 81
+R 00 00 00 09
+T 00 00 00
+R 00 00 00 08
+T 00 00 00 00 00
+R 00 00 00 08

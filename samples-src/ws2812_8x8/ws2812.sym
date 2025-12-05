@@ -1,0 +1,47 @@
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 1.
+Hexadecimal [24-Bits]
+
+Symbol Table
+
+    .__.$$$.                                                    =  002710 L
+    .__.ABS.                                                    =  000000 G
+    .__.CPU.                                                    =  000000 L
+    .__.H$L.                                                    =  000001 L
+  9 _WS2812_clear                                                  00053E GR
+  9 _WS2812_plain_color_fill                                       000566 GR
+  9 _WS2812_send_led_rgb_array                                     000507 GR
+  9 _WS2812_send_led_single                                        00032F GR
+  9 _WS2812_wait_spi_sr                                            000327 GR
+    ___fs2uchar                                                    ****** GX
+    ___fsadd                                                       ****** GX
+    ___fsdiv                                                       ****** GX
+    ___fslt                                                        ****** GX
+    ___fsmul                                                       ****** GX
+    ___fssub                                                       ****** GX
+    ___uchar2fs                                                    ****** GX
+  9 _bytes_to_rgb                                                  000056 GR
+    _delay_10us                                                    ****** GX
+    _fmod                                                          ****** GX
+  1 _g_leds_matrix                                                 000000 R
+  9 _get_color                                                     000000 GR
+  9 _hsv_to_rgb                                                    000086 GR
+  9 _set_color                                                     00002C GR
+  9 _uint32_to_rgb                                                 000068 GR
+
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 2.
+Hexadecimal [24-Bits]
+
+Area Table
+
+   0 _CODE                                      size      0   flags    0
+   1 DATA                                       size     C0   flags    0
+   2 INITIALIZED                                size      0   flags    0
+   3 DABS                                       size      0   flags    8
+   4 HOME                                       size      0   flags    0
+   5 GSINIT                                     size      0   flags    0
+   6 GSFINAL                                    size      0   flags    0
+   7 CONST                                      size      0   flags    0
+   8 INITIALIZER                                size      0   flags    0
+   9 CODE                                       size    58B   flags    0
+   A CABS                                       size      0   flags    8
+

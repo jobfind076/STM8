@@ -1,0 +1,118 @@
+                                      1 ;--------------------------------------------------------
+                                      2 ; File Created by SDCC : free open source ANSI-C Compiler
+                                      3 ; Version 3.8.0 #10562 (Linux)
+                                      4 ;--------------------------------------------------------
+                                      5 	.module random
+                                      6 	.optsdcc -mstm8
+                                      7 	
+                                      8 ;--------------------------------------------------------
+                                      9 ; Public variables in this module
+                                     10 ;--------------------------------------------------------
+                                     11 	.globl _rand
+                                     12 	.globl _init_rand
+                                     13 	.globl _rand_byte
+                                     14 	.globl _random
+                                     15 ;--------------------------------------------------------
+                                     16 ; ram data
+                                     17 ;--------------------------------------------------------
+                                     18 	.area DATA
+                                     19 ;--------------------------------------------------------
+                                     20 ; ram data
+                                     21 ;--------------------------------------------------------
+                                     22 	.area INITIALIZED
+      000000                         23 _g_seed:
+      000000                         24 	.ds 2
+                                     25 ;--------------------------------------------------------
+                                     26 ; absolute external ram data
+                                     27 ;--------------------------------------------------------
+                                     28 	.area DABS (ABS)
+                                     29 
+                                     30 ; default segment ordering for linker
+                                     31 	.area HOME
+                                     32 	.area GSINIT
+                                     33 	.area GSFINAL
+                                     34 	.area CONST
+                                     35 	.area INITIALIZER
+                                     36 	.area CODE
+                                     37 
+                                     38 ;--------------------------------------------------------
+                                     39 ; global & static initialisations
+                                     40 ;--------------------------------------------------------
+                                     41 	.area HOME
+                                     42 	.area GSINIT
+                                     43 	.area GSFINAL
+                                     44 	.area GSINIT
+                                     45 ;--------------------------------------------------------
+                                     46 ; Home
+                                     47 ;--------------------------------------------------------
+                                     48 	.area HOME
+                                     49 	.area HOME
+                                     50 ;--------------------------------------------------------
+                                     51 ; code
+                                     52 ;--------------------------------------------------------
+                                     53 	.area CODE
+                                     54 ;	random.c: 7: uint16_t rand(void)
+                                     55 ;	-----------------------------------------
+                                     56 ;	 function rand
+                                     57 ;	-----------------------------------------
+      000000                         58 _rand:
+                                     59 ;	random.c: 9: g_seed = (g_seed * 1103515245 + 12345) & 0xFFFF; // A common LCG formula
+      000000 CEu00u00         [ 2]   60 	ldw	x, _g_seed+0
+      000003 89               [ 2]   61 	pushw	x
+      000004 4B 6D            [ 1]   62 	push	#0x6d
+      000006 4B 4E            [ 1]   63 	push	#0x4e
+      000008 CDr00r00         [ 4]   64 	call	__mulint
+      00000B 5B 04            [ 2]   65 	addw	sp, #4
+      00000D 1C 30 39         [ 2]   66 	addw	x, #0x3039
+      000010 CFu00u00         [ 2]   67 	ldw	_g_seed+0, x
+                                     68 ;	random.c: 10: return g_seed;
+      000013 CEu00u00         [ 2]   69 	ldw	x, _g_seed+0
+                                     70 ;	random.c: 11: }
+      000016 81               [ 4]   71 	ret
+                                     72 ;	random.c: 15: void init_rand(uint16_t value)
+                                     73 ;	-----------------------------------------
+                                     74 ;	 function init_rand
+                                     75 ;	-----------------------------------------
+      000017                         76 _init_rand:
+                                     77 ;	random.c: 17: g_seed = value;
+      000017 1E 03            [ 2]   78 	ldw	x, (0x03, sp)
+      000019 CFu00u00         [ 2]   79 	ldw	_g_seed+0, x
+                                     80 ;	random.c: 18: }
+      00001C 81               [ 4]   81 	ret
+                                     82 ;	random.c: 21: uint8_t rand_byte(void)
+                                     83 ;	-----------------------------------------
+                                     84 ;	 function rand_byte
+                                     85 ;	-----------------------------------------
+      00001D                         86 _rand_byte:
+                                     87 ;	random.c: 23: return rand() & 0xFF;
+      00001D CDr00r00         [ 4]   88 	call	_rand
+      000020 9F               [ 1]   89 	ld	a, xl
+                                     90 ;	random.c: 24: }
+      000021 81               [ 4]   91 	ret
+                                     92 ;	random.c: 26: uint16_t random(uint16_t min_v, uint16_t max_v)
+                                     93 ;	-----------------------------------------
+                                     94 ;	 function random
+                                     95 ;	-----------------------------------------
+      000022                         96 _random:
+                                     97 ;	random.c: 28: uint16_t v = (min_v + rand()) % max_v;
+      000022 CDr00r00         [ 4]   98 	call	_rand
+      000025 72 FB 03         [ 2]   99 	addw	x, (0x03, sp)
+      000028 16 05            [ 2]  100 	ldw	y, (0x05, sp)
+      00002A 65               [ 2]  101 	divw	x, y
+      00002B 93               [ 1]  102 	ldw	x, y
+                                    103 ;	random.c: 30: if (v < min_v)
+      00002C 13 03            [ 2]  104 	cpw	x, (0x03, sp)
+      00002E 25 01            [ 1]  105 	jrc	00110$
+      000030 81               [ 4]  106 	ret
+      000031                        107 00110$:
+                                    108 ;	random.c: 32: v = min_v;
+      000031 1E 03            [ 2]  109 	ldw	x, (0x03, sp)
+                                    110 ;	random.c: 35: return v;
+                                    111 ;	random.c: 36: }
+      000033 81               [ 4]  112 	ret
+                                    113 	.area CODE
+                                    114 	.area CONST
+                                    115 	.area INITIALIZER
+      000000                        116 __xinit__g_seed:
+      000000 00 00                  117 	.dw #0x0000
+                                    118 	.area CABS (ABS)

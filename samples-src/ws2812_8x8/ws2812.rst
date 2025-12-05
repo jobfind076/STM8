@@ -1,0 +1,1044 @@
+                                      1 ;--------------------------------------------------------
+                                      2 ; File Created by SDCC : free open source ANSI-C Compiler
+                                      3 ; Version 3.8.0 #10562 (Linux)
+                                      4 ;--------------------------------------------------------
+                                      5 	.module ws2812
+                                      6 	.optsdcc -mstm8
+                                      7 	
+                                      8 ;--------------------------------------------------------
+                                      9 ; Public variables in this module
+                                     10 ;--------------------------------------------------------
+                                     11 	.globl _set_color
+                                     12 	.globl _get_color
+                                     13 	.globl _fmod
+                                     14 	.globl _delay_10us
+                                     15 	.globl _bytes_to_rgb
+                                     16 	.globl _uint32_to_rgb
+                                     17 	.globl _hsv_to_rgb
+                                     18 	.globl _WS2812_wait_spi_sr
+                                     19 	.globl _WS2812_send_led_single
+                                     20 	.globl _WS2812_send_led_rgb_array
+                                     21 	.globl _WS2812_clear
+                                     22 	.globl _WS2812_plain_color_fill
+                                     23 ;--------------------------------------------------------
+                                     24 ; ram data
+                                     25 ;--------------------------------------------------------
+                                     26 	.area DATA
+      00000C                         27 _g_leds_matrix:
+      00000C                         28 	.ds 192
+                                     29 ;--------------------------------------------------------
+                                     30 ; ram data
+                                     31 ;--------------------------------------------------------
+                                     32 	.area INITIALIZED
+                                     33 ;--------------------------------------------------------
+                                     34 ; absolute external ram data
+                                     35 ;--------------------------------------------------------
+                                     36 	.area DABS (ABS)
+                                     37 
+                                     38 ; default segment ordering for linker
+                                     39 	.area HOME
+                                     40 	.area GSINIT
+                                     41 	.area GSFINAL
+                                     42 	.area CONST
+                                     43 	.area INITIALIZER
+                                     44 	.area CODE
+                                     45 
+                                     46 ;--------------------------------------------------------
+                                     47 ; global & static initialisations
+                                     48 ;--------------------------------------------------------
+                                     49 	.area HOME
+                                     50 	.area GSINIT
+                                     51 	.area GSFINAL
+                                     52 	.area GSINIT
+                                     53 ;--------------------------------------------------------
+                                     54 ; Home
+                                     55 ;--------------------------------------------------------
+                                     56 	.area HOME
+                                     57 	.area HOME
+                                     58 ;--------------------------------------------------------
+                                     59 ; code
+                                     60 ;--------------------------------------------------------
+                                     61 	.area CODE
+                                     62 ;	ws2812.c: 13: void get_color (uint8_t i_index, RGB* o_color)
+                                     63 ;	-----------------------------------------
+                                     64 ;	 function get_color
+                                     65 ;	-----------------------------------------
+      008867                         66 _get_color:
+      008867 52 04            [ 2]   67 	sub	sp, #4
+                                     68 ;	ws2812.c: 15: o_color->b = g_leds_matrix[i_index % NB_LEDS].b;
+      008869 16 08            [ 2]   69 	ldw	y, (0x08, sp)
+      00886B 17 03            [ 2]   70 	ldw	(0x03, sp), y
+      00886D 93               [ 1]   71 	ldw	x, y
+      00886E 5C               [ 1]   72 	incw	x
+      00886F 5C               [ 1]   73 	incw	x
+      008870 1F 01            [ 2]   74 	ldw	(0x01, sp), x
+      008872 7B 07            [ 1]   75 	ld	a, (0x07, sp)
+      008874 A4 3F            [ 1]   76 	and	a, #0x3f
+      008876 97               [ 1]   77 	ld	xl, a
+      008877 A6 03            [ 1]   78 	ld	a, #0x03
+      008879 42               [ 4]   79 	mul	x, a
+      00887A 1C 00 0C         [ 2]   80 	addw	x, #_g_leds_matrix
+      00887D 51               [ 1]   81 	exgw	x, y
+      00887E 93               [ 1]   82 	ldw	x, y
+      00887F E6 02            [ 1]   83 	ld	a, (0x2, x)
+      008881 1E 01            [ 2]   84 	ldw	x, (0x01, sp)
+      008883 F7               [ 1]   85 	ld	(x), a
+                                     86 ;	ws2812.c: 16: o_color->r = g_leds_matrix[i_index % NB_LEDS].r;
+      008884 90 F6            [ 1]   87 	ld	a, (y)
+      008886 1E 03            [ 2]   88 	ldw	x, (0x03, sp)
+      008888 F7               [ 1]   89 	ld	(x), a
+                                     90 ;	ws2812.c: 17: o_color->g = g_leds_matrix[i_index % NB_LEDS].g;
+      008889 1E 03            [ 2]   91 	ldw	x, (0x03, sp)
+      00888B 5C               [ 1]   92 	incw	x
+      00888C 90 E6 01         [ 1]   93 	ld	a, (0x1, y)
+      00888F F7               [ 1]   94 	ld	(x), a
+                                     95 ;	ws2812.c: 18: }
+      008890 5B 04            [ 2]   96 	addw	sp, #4
+      008892 81               [ 4]   97 	ret
+                                     98 ;	ws2812.c: 20: void set_color (uint8_t i_index, RGB* i_color)
+                                     99 ;	-----------------------------------------
+                                    100 ;	 function set_color
+                                    101 ;	-----------------------------------------
+      008893                        102 _set_color:
+      008893 52 04            [ 2]  103 	sub	sp, #4
+                                    104 ;	ws2812.c: 22: g_leds_matrix[i_index % NB_LEDS].b = i_color->b;
+      008895 7B 07            [ 1]  105 	ld	a, (0x07, sp)
+      008897 A4 3F            [ 1]  106 	and	a, #0x3f
+      008899 97               [ 1]  107 	ld	xl, a
+      00889A A6 03            [ 1]  108 	ld	a, #0x03
+      00889C 42               [ 4]  109 	mul	x, a
+      00889D 1C 00 0C         [ 2]  110 	addw	x, #_g_leds_matrix
+      0088A0 1F 01            [ 2]  111 	ldw	(0x01, sp), x
+      0088A2 5C               [ 1]  112 	incw	x
+      0088A3 5C               [ 1]  113 	incw	x
+      0088A4 1F 03            [ 2]  114 	ldw	(0x03, sp), x
+      0088A6 16 08            [ 2]  115 	ldw	y, (0x08, sp)
+      0088A8 93               [ 1]  116 	ldw	x, y
+      0088A9 E6 02            [ 1]  117 	ld	a, (0x2, x)
+      0088AB 1E 03            [ 2]  118 	ldw	x, (0x03, sp)
+      0088AD F7               [ 1]  119 	ld	(x), a
+                                    120 ;	ws2812.c: 23: g_leds_matrix[i_index % NB_LEDS].r = i_color->r;
+      0088AE 90 F6            [ 1]  121 	ld	a, (y)
+      0088B0 1E 01            [ 2]  122 	ldw	x, (0x01, sp)
+      0088B2 F7               [ 1]  123 	ld	(x), a
+                                    124 ;	ws2812.c: 24: g_leds_matrix[i_index % NB_LEDS].g = i_color->g;
+      0088B3 1E 01            [ 2]  125 	ldw	x, (0x01, sp)
+      0088B5 5C               [ 1]  126 	incw	x
+      0088B6 90 E6 01         [ 1]  127 	ld	a, (0x1, y)
+      0088B9 F7               [ 1]  128 	ld	(x), a
+                                    129 ;	ws2812.c: 25: }
+      0088BA 5B 04            [ 2]  130 	addw	sp, #4
+      0088BC 81               [ 4]  131 	ret
+                                    132 ;	ws2812.c: 27: void bytes_to_rgb (RGB* o_color, uint8_t i_r, uint8_t i_g, uint8_t i_b)
+                                    133 ;	-----------------------------------------
+                                    134 ;	 function bytes_to_rgb
+                                    135 ;	-----------------------------------------
+      0088BD                        136 _bytes_to_rgb:
+                                    137 ;	ws2812.c: 29: o_color->r = i_r;
+      0088BD 16 03            [ 2]  138 	ldw	y, (0x03, sp)
+      0088BF 7B 05            [ 1]  139 	ld	a, (0x05, sp)
+      0088C1 90 F7            [ 1]  140 	ld	(y), a
+                                    141 ;	ws2812.c: 30: o_color->g = i_g;
+      0088C3 93               [ 1]  142 	ldw	x, y
+      0088C4 5C               [ 1]  143 	incw	x
+      0088C5 7B 06            [ 1]  144 	ld	a, (0x06, sp)
+      0088C7 F7               [ 1]  145 	ld	(x), a
+                                    146 ;	ws2812.c: 31: o_color->b = i_b;
+      0088C8 93               [ 1]  147 	ldw	x, y
+      0088C9 5C               [ 1]  148 	incw	x
+      0088CA 5C               [ 1]  149 	incw	x
+      0088CB 7B 07            [ 1]  150 	ld	a, (0x07, sp)
+      0088CD F7               [ 1]  151 	ld	(x), a
+                                    152 ;	ws2812.c: 32: }
+      0088CE 81               [ 4]  153 	ret
+                                    154 ;	ws2812.c: 34: void uint32_to_rgb (RGB* o_color, uint32_t i_color)
+                                    155 ;	-----------------------------------------
+                                    156 ;	 function uint32_to_rgb
+                                    157 ;	-----------------------------------------
+      0088CF                        158 _uint32_to_rgb:
+      0088CF 52 06            [ 2]  159 	sub	sp, #6
+                                    160 ;	ws2812.c: 36: o_color->r = (i_color >> 16) & 0xFF;
+      0088D1 16 09            [ 2]  161 	ldw	y, (0x09, sp)
+      0088D3 1E 0B            [ 2]  162 	ldw	x, (0x0b, sp)
+      0088D5 0F 01            [ 1]  163 	clr	(0x01, sp)
+      0088D7 9F               [ 1]  164 	ld	a, xl
+      0088D8 90 F7            [ 1]  165 	ld	(y), a
+                                    166 ;	ws2812.c: 37: o_color->g = (i_color >> 8) & 0xFF;
+      0088DA 93               [ 1]  167 	ldw	x, y
+      0088DB 5C               [ 1]  168 	incw	x
+      0088DC 1F 05            [ 2]  169 	ldw	(0x05, sp), x
+      0088DE 1E 0D            [ 2]  170 	ldw	x, (0x0d, sp)
+      0088E0 9E               [ 1]  171 	ld	a, xh
+      0088E1 1E 05            [ 2]  172 	ldw	x, (0x05, sp)
+      0088E3 F7               [ 1]  173 	ld	(x), a
+                                    174 ;	ws2812.c: 38: o_color->b = (i_color >> 0) & 0xFF;
+      0088E4 93               [ 1]  175 	ldw	x, y
+      0088E5 5C               [ 1]  176 	incw	x
+      0088E6 5C               [ 1]  177 	incw	x
+      0088E7 7B 0E            [ 1]  178 	ld	a, (0x0e, sp)
+      0088E9 F7               [ 1]  179 	ld	(x), a
+                                    180 ;	ws2812.c: 39: }
+      0088EA 5B 06            [ 2]  181 	addw	sp, #6
+      0088EC 81               [ 4]  182 	ret
+                                    183 ;	ws2812.c: 41: void hsv_to_rgb (RGB* o_color, uint8_t i_h, uint8_t i_s, uint8_t i_v)
+                                    184 ;	-----------------------------------------
+                                    185 ;	 function hsv_to_rgb
+                                    186 ;	-----------------------------------------
+      0088ED                        187 _hsv_to_rgb:
+      0088ED 52 3D            [ 2]  188 	sub	sp, #61
+                                    189 ;	ws2812.c: 45: o_color->r = 0;
+      0088EF 16 40            [ 2]  190 	ldw	y, (0x40, sp)
+                                    191 ;	ws2812.c: 46: o_color->g = 0;
+      0088F1 17 07            [ 2]  192 	ldw	(0x07, sp), y
+      0088F3 93               [ 1]  193 	ldw	x, y
+      0088F4 5C               [ 1]  194 	incw	x
+      0088F5 1F 12            [ 2]  195 	ldw	(0x12, sp), x
+                                    196 ;	ws2812.c: 47: o_color->b = 0;
+      0088F7 1E 07            [ 2]  197 	ldw	x, (0x07, sp)
+      0088F9 5C               [ 1]  198 	incw	x
+      0088FA 5C               [ 1]  199 	incw	x
+      0088FB 1F 18            [ 2]  200 	ldw	(0x18, sp), x
+                                    201 ;	ws2812.c: 43: if ((i_h > 360) || (i_s > 100) || (i_v > 100))
+      0088FD 7B 43            [ 1]  202 	ld	a, (0x43, sp)
+      0088FF A1 64            [ 1]  203 	cp	a, #0x64
+      008901 22 06            [ 1]  204 	jrugt	00101$
+      008903 7B 44            [ 1]  205 	ld	a, (0x44, sp)
+      008905 A1 64            [ 1]  206 	cp	a, #0x64
+      008907 23 0C            [ 2]  207 	jrule	00102$
+      008909                        208 00101$:
+                                    209 ;	ws2812.c: 45: o_color->r = 0;
+      008909 1E 07            [ 2]  210 	ldw	x, (0x07, sp)
+      00890B 7F               [ 1]  211 	clr	(x)
+                                    212 ;	ws2812.c: 46: o_color->g = 0;
+      00890C 1E 12            [ 2]  213 	ldw	x, (0x12, sp)
+      00890E 7F               [ 1]  214 	clr	(x)
+                                    215 ;	ws2812.c: 47: o_color->b = 0;
+      00890F 1E 18            [ 2]  216 	ldw	x, (0x18, sp)
+      008911 7F               [ 1]  217 	clr	(x)
+                                    218 ;	ws2812.c: 49: return; // err
+      008912 CC 8B 8B         [ 2]  219 	jp	00125$
+      008915                        220 00102$:
+                                    221 ;	ws2812.c: 52: float s = (float)i_s / 100.0;
+      008915 7B 43            [ 1]  222 	ld	a, (0x43, sp)
+      008917 88               [ 1]  223 	push	a
+      008918 CD 97 E7         [ 4]  224 	call	___uchar2fs
+      00891B 84               [ 1]  225 	pop	a
+      00891C 4B 00            [ 1]  226 	push	#0x00
+      00891E 4B 00            [ 1]  227 	push	#0x00
+      008920 4B C8            [ 1]  228 	push	#0xc8
+      008922 4B 42            [ 1]  229 	push	#0x42
+      008924 89               [ 2]  230 	pushw	x
+      008925 90 89            [ 2]  231 	pushw	y
+      008927 CD 97 56         [ 4]  232 	call	___fsdiv
+      00892A 5B 08            [ 2]  233 	addw	sp, #8
+      00892C 1F 2C            [ 2]  234 	ldw	(0x2c, sp), x
+      00892E 17 2A            [ 2]  235 	ldw	(0x2a, sp), y
+                                    236 ;	ws2812.c: 53: float v = (float)i_v / 100.0;
+      008930 7B 44            [ 1]  237 	ld	a, (0x44, sp)
+      008932 88               [ 1]  238 	push	a
+      008933 CD 97 E7         [ 4]  239 	call	___uchar2fs
+      008936 84               [ 1]  240 	pop	a
+      008937 4B 00            [ 1]  241 	push	#0x00
+      008939 4B 00            [ 1]  242 	push	#0x00
+      00893B 4B C8            [ 1]  243 	push	#0xc8
+      00893D 4B 42            [ 1]  244 	push	#0x42
+      00893F 89               [ 2]  245 	pushw	x
+      008940 90 89            [ 2]  246 	pushw	y
+      008942 CD 97 56         [ 4]  247 	call	___fsdiv
+      008945 5B 08            [ 2]  248 	addw	sp, #8
+      008947 1F 38            [ 2]  249 	ldw	(0x38, sp), x
+      008949 17 36            [ 2]  250 	ldw	(0x36, sp), y
+                                    251 ;	ws2812.c: 54: float C = s * v;
+      00894B 1E 38            [ 2]  252 	ldw	x, (0x38, sp)
+      00894D 89               [ 2]  253 	pushw	x
+      00894E 1E 38            [ 2]  254 	ldw	x, (0x38, sp)
+      008950 89               [ 2]  255 	pushw	x
+      008951 1E 30            [ 2]  256 	ldw	x, (0x30, sp)
+      008953 89               [ 2]  257 	pushw	x
+      008954 1E 30            [ 2]  258 	ldw	x, (0x30, sp)
+      008956 89               [ 2]  259 	pushw	x
+      008957 CD 8E 15         [ 4]  260 	call	___fsmul
+      00895A 5B 08            [ 2]  261 	addw	sp, #8
+      00895C 1F 34            [ 2]  262 	ldw	(0x34, sp), x
+      00895E 17 32            [ 2]  263 	ldw	(0x32, sp), y
+                                    264 ;	ws2812.c: 55: float X = C * (1 - abs(fmod(i_h / 60.0, 2.0) - 1));
+      008960 7B 42            [ 1]  265 	ld	a, (0x42, sp)
+      008962 88               [ 1]  266 	push	a
+      008963 CD 97 E7         [ 4]  267 	call	___uchar2fs
+      008966 84               [ 1]  268 	pop	a
+      008967 4B 00            [ 1]  269 	push	#0x00
+      008969 4B 00            [ 1]  270 	push	#0x00
+      00896B 4B 70            [ 1]  271 	push	#0x70
+      00896D 4B 42            [ 1]  272 	push	#0x42
+      00896F 89               [ 2]  273 	pushw	x
+      008970 90 89            [ 2]  274 	pushw	y
+      008972 CD 97 56         [ 4]  275 	call	___fsdiv
+      008975 5B 08            [ 2]  276 	addw	sp, #8
+      008977 1F 05            [ 2]  277 	ldw	(0x05, sp), x
+      008979 17 03            [ 2]  278 	ldw	(0x03, sp), y
+      00897B 5F               [ 1]  279 	clrw	x
+      00897C 89               [ 2]  280 	pushw	x
+      00897D 4B 00            [ 1]  281 	push	#0x00
+      00897F 4B 40            [ 1]  282 	push	#0x40
+      008981 1E 09            [ 2]  283 	ldw	x, (0x09, sp)
+      008983 89               [ 2]  284 	pushw	x
+      008984 1E 09            [ 2]  285 	ldw	x, (0x09, sp)
+      008986 89               [ 2]  286 	pushw	x
+      008987 CD 88 21         [ 4]  287 	call	_fmod
+      00898A 5B 08            [ 2]  288 	addw	sp, #8
+      00898C 4B 00            [ 1]  289 	push	#0x00
+      00898E 4B 00            [ 1]  290 	push	#0x00
+      008990 4B 80            [ 1]  291 	push	#0x80
+      008992 4B 3F            [ 1]  292 	push	#0x3f
+      008994 89               [ 2]  293 	pushw	x
+      008995 90 89            [ 2]  294 	pushw	y
+      008997 CD 8D F2         [ 4]  295 	call	___fssub
+      00899A 5B 08            [ 2]  296 	addw	sp, #8
+      00899C 89               [ 2]  297 	pushw	x
+      00899D 90 89            [ 2]  298 	pushw	y
+      00899F 5F               [ 1]  299 	clrw	x
+      0089A0 89               [ 2]  300 	pushw	x
+      0089A1 5F               [ 1]  301 	clrw	x
+      0089A2 89               [ 2]  302 	pushw	x
+      0089A3 CD 90 DB         [ 4]  303 	call	___fslt
+      0089A6 5B 08            [ 2]  304 	addw	sp, #8
+      0089A8 6B 0D            [ 1]  305 	ld	(0x0d, sp), a
+      0089AA 27 27            [ 1]  306 	jreq	00127$
+      0089AC 5F               [ 1]  307 	clrw	x
+      0089AD 89               [ 2]  308 	pushw	x
+      0089AE 4B 00            [ 1]  309 	push	#0x00
+      0089B0 4B 40            [ 1]  310 	push	#0x40
+      0089B2 1E 09            [ 2]  311 	ldw	x, (0x09, sp)
+      0089B4 89               [ 2]  312 	pushw	x
+      0089B5 1E 09            [ 2]  313 	ldw	x, (0x09, sp)
+      0089B7 89               [ 2]  314 	pushw	x
+      0089B8 CD 88 21         [ 4]  315 	call	_fmod
+      0089BB 5B 08            [ 2]  316 	addw	sp, #8
+      0089BD 4B 00            [ 1]  317 	push	#0x00
+      0089BF 4B 00            [ 1]  318 	push	#0x00
+      0089C1 4B 80            [ 1]  319 	push	#0x80
+      0089C3 4B 3F            [ 1]  320 	push	#0x3f
+      0089C5 89               [ 2]  321 	pushw	x
+      0089C6 90 89            [ 2]  322 	pushw	y
+      0089C8 CD 8D F2         [ 4]  323 	call	___fssub
+      0089CB 5B 08            [ 2]  324 	addw	sp, #8
+      0089CD 1F 3C            [ 2]  325 	ldw	(0x3c, sp), x
+      0089CF 17 3A            [ 2]  326 	ldw	(0x3a, sp), y
+      0089D1 20 40            [ 2]  327 	jra	00128$
+      0089D3                        328 00127$:
+      0089D3 5F               [ 1]  329 	clrw	x
+      0089D4 89               [ 2]  330 	pushw	x
+      0089D5 4B 00            [ 1]  331 	push	#0x00
+      0089D7 4B 40            [ 1]  332 	push	#0x40
+      0089D9 1E 09            [ 2]  333 	ldw	x, (0x09, sp)
+      0089DB 89               [ 2]  334 	pushw	x
+      0089DC 1E 09            [ 2]  335 	ldw	x, (0x09, sp)
+      0089DE 89               [ 2]  336 	pushw	x
+      0089DF CD 88 21         [ 4]  337 	call	_fmod
+      0089E2 5B 08            [ 2]  338 	addw	sp, #8
+      0089E4 1F 10            [ 2]  339 	ldw	(0x10, sp), x
+      0089E6 17 0E            [ 2]  340 	ldw	(0x0e, sp), y
+      0089E8 5F               [ 1]  341 	clrw	x
+      0089E9 89               [ 2]  342 	pushw	x
+      0089EA 4B 80            [ 1]  343 	push	#0x80
+      0089EC 4B 3F            [ 1]  344 	push	#0x3f
+      0089EE 1E 14            [ 2]  345 	ldw	x, (0x14, sp)
+      0089F0 89               [ 2]  346 	pushw	x
+      0089F1 1E 14            [ 2]  347 	ldw	x, (0x14, sp)
+      0089F3 89               [ 2]  348 	pushw	x
+      0089F4 CD 8D F2         [ 4]  349 	call	___fssub
+      0089F7 5B 08            [ 2]  350 	addw	sp, #8
+      0089F9 1F 16            [ 2]  351 	ldw	(0x16, sp), x
+      0089FB 17 14            [ 2]  352 	ldw	(0x14, sp), y
+      0089FD 16 16            [ 2]  353 	ldw	y, (0x16, sp)
+      0089FF 17 0B            [ 2]  354 	ldw	(0x0b, sp), y
+      008A01 7B 15            [ 1]  355 	ld	a, (0x15, sp)
+      008A03 6B 0A            [ 1]  356 	ld	(0x0a, sp), a
+      008A05 7B 14            [ 1]  357 	ld	a, (0x14, sp)
+      008A07 A8 80            [ 1]  358 	xor	a, #0x80
+      008A09 6B 09            [ 1]  359 	ld	(0x09, sp), a
+      008A0B 16 0B            [ 2]  360 	ldw	y, (0x0b, sp)
+      008A0D 17 3C            [ 2]  361 	ldw	(0x3c, sp), y
+      008A0F 16 09            [ 2]  362 	ldw	y, (0x09, sp)
+      008A11 17 3A            [ 2]  363 	ldw	(0x3a, sp), y
+      008A13                        364 00128$:
+      008A13 1E 3C            [ 2]  365 	ldw	x, (0x3c, sp)
+      008A15 89               [ 2]  366 	pushw	x
+      008A16 1E 3C            [ 2]  367 	ldw	x, (0x3c, sp)
+      008A18 89               [ 2]  368 	pushw	x
+      008A19 5F               [ 1]  369 	clrw	x
+      008A1A 89               [ 2]  370 	pushw	x
+      008A1B 4B 80            [ 1]  371 	push	#0x80
+      008A1D 4B 3F            [ 1]  372 	push	#0x3f
+      008A1F CD 8D F2         [ 4]  373 	call	___fssub
+      008A22 5B 08            [ 2]  374 	addw	sp, #8
+      008A24 89               [ 2]  375 	pushw	x
+      008A25 90 89            [ 2]  376 	pushw	y
+      008A27 1E 38            [ 2]  377 	ldw	x, (0x38, sp)
+      008A29 89               [ 2]  378 	pushw	x
+      008A2A 1E 38            [ 2]  379 	ldw	x, (0x38, sp)
+      008A2C 89               [ 2]  380 	pushw	x
+      008A2D CD 8E 15         [ 4]  381 	call	___fsmul
+      008A30 5B 08            [ 2]  382 	addw	sp, #8
+      008A32 1F 30            [ 2]  383 	ldw	(0x30, sp), x
+      008A34 17 2E            [ 2]  384 	ldw	(0x2e, sp), y
+                                    385 ;	ws2812.c: 56: float m = v - C;
+      008A36 1E 34            [ 2]  386 	ldw	x, (0x34, sp)
+      008A38 89               [ 2]  387 	pushw	x
+      008A39 1E 34            [ 2]  388 	ldw	x, (0x34, sp)
+      008A3B 89               [ 2]  389 	pushw	x
+      008A3C 1E 3C            [ 2]  390 	ldw	x, (0x3c, sp)
+      008A3E 89               [ 2]  391 	pushw	x
+      008A3F 1E 3C            [ 2]  392 	ldw	x, (0x3c, sp)
+      008A41 89               [ 2]  393 	pushw	x
+      008A42 CD 8D F2         [ 4]  394 	call	___fssub
+      008A45 5B 08            [ 2]  395 	addw	sp, #8
+      008A47 1F 20            [ 2]  396 	ldw	(0x20, sp), x
+      008A49 17 1E            [ 2]  397 	ldw	(0x1e, sp), y
+                                    398 ;	ws2812.c: 59: if ((i_h >= 0) && (i_h < 60))
+      008A4B 7B 42            [ 1]  399 	ld	a, (0x42, sp)
+      008A4D A1 3C            [ 1]  400 	cp	a, #0x3c
+      008A4F 4F               [ 1]  401 	clr	a
+      008A50 49               [ 1]  402 	rlc	a
+      008A51 6B 02            [ 1]  403 	ld	(0x02, sp), a
+      008A53 27 18            [ 1]  404 	jreq	00122$
+                                    405 ;	ws2812.c: 61: r = C, g = X, b = 0;
+      008A55 16 34            [ 2]  406 	ldw	y, (0x34, sp)
+      008A57 17 1C            [ 2]  407 	ldw	(0x1c, sp), y
+      008A59 16 32            [ 2]  408 	ldw	y, (0x32, sp)
+      008A5B 17 1A            [ 2]  409 	ldw	(0x1a, sp), y
+      008A5D 16 30            [ 2]  410 	ldw	y, (0x30, sp)
+      008A5F 17 28            [ 2]  411 	ldw	(0x28, sp), y
+      008A61 16 2E            [ 2]  412 	ldw	y, (0x2e, sp)
+      008A63 17 26            [ 2]  413 	ldw	(0x26, sp), y
+      008A65 5F               [ 1]  414 	clrw	x
+      008A66 1F 24            [ 2]  415 	ldw	(0x24, sp), x
+      008A68 1F 22            [ 2]  416 	ldw	(0x22, sp), x
+      008A6A CC 8B 0D         [ 2]  417 	jp	00123$
+      008A6D                        418 00122$:
+                                    419 ;	ws2812.c: 63: else if(i_h >= 60 && i_h < 120)
+      008A6D 7B 42            [ 1]  420 	ld	a, (0x42, sp)
+      008A6F A1 78            [ 1]  421 	cp	a, #0x78
+      008A71 4F               [ 1]  422 	clr	a
+      008A72 49               [ 1]  423 	rlc	a
+      008A73 97               [ 1]  424 	ld	xl, a
+      008A74 0D 02            [ 1]  425 	tnz	(0x02, sp)
+      008A76 26 1B            [ 1]  426 	jrne	00118$
+      008A78 9F               [ 1]  427 	ld	a, xl
+      008A79 4D               [ 1]  428 	tnz	a
+      008A7A 27 17            [ 1]  429 	jreq	00118$
+                                    430 ;	ws2812.c: 65: r = X, g = C, b = 0;
+      008A7C 16 30            [ 2]  431 	ldw	y, (0x30, sp)
+      008A7E 17 1C            [ 2]  432 	ldw	(0x1c, sp), y
+      008A80 16 2E            [ 2]  433 	ldw	y, (0x2e, sp)
+      008A82 17 1A            [ 2]  434 	ldw	(0x1a, sp), y
+      008A84 16 34            [ 2]  435 	ldw	y, (0x34, sp)
+      008A86 17 28            [ 2]  436 	ldw	(0x28, sp), y
+      008A88 16 32            [ 2]  437 	ldw	y, (0x32, sp)
+      008A8A 17 26            [ 2]  438 	ldw	(0x26, sp), y
+      008A8C 5F               [ 1]  439 	clrw	x
+      008A8D 1F 24            [ 2]  440 	ldw	(0x24, sp), x
+      008A8F 1F 22            [ 2]  441 	ldw	(0x22, sp), x
+      008A91 20 7A            [ 2]  442 	jra	00123$
+      008A93                        443 00118$:
+                                    444 ;	ws2812.c: 67: else if(i_h >= 120 && i_h < 180)
+      008A93 7B 42            [ 1]  445 	ld	a, (0x42, sp)
+      008A95 A1 B4            [ 1]  446 	cp	a, #0xb4
+      008A97 4F               [ 1]  447 	clr	a
+      008A98 49               [ 1]  448 	rlc	a
+      008A99 6B 01            [ 1]  449 	ld	(0x01, sp), a
+      008A9B 9F               [ 1]  450 	ld	a, xl
+      008A9C 4D               [ 1]  451 	tnz	a
+      008A9D 26 1B            [ 1]  452 	jrne	00114$
+      008A9F 0D 01            [ 1]  453 	tnz	(0x01, sp)
+      008AA1 27 17            [ 1]  454 	jreq	00114$
+                                    455 ;	ws2812.c: 69: r = 0, g = C, b = X;
+      008AA3 5F               [ 1]  456 	clrw	x
+      008AA4 1F 1C            [ 2]  457 	ldw	(0x1c, sp), x
+      008AA6 1F 1A            [ 2]  458 	ldw	(0x1a, sp), x
+      008AA8 16 34            [ 2]  459 	ldw	y, (0x34, sp)
+      008AAA 17 28            [ 2]  460 	ldw	(0x28, sp), y
+      008AAC 16 32            [ 2]  461 	ldw	y, (0x32, sp)
+      008AAE 17 26            [ 2]  462 	ldw	(0x26, sp), y
+      008AB0 16 30            [ 2]  463 	ldw	y, (0x30, sp)
+      008AB2 17 24            [ 2]  464 	ldw	(0x24, sp), y
+      008AB4 16 2E            [ 2]  465 	ldw	y, (0x2e, sp)
+      008AB6 17 22            [ 2]  466 	ldw	(0x22, sp), y
+      008AB8 20 53            [ 2]  467 	jra	00123$
+      008ABA                        468 00114$:
+                                    469 ;	ws2812.c: 71: else if(i_h >= 180 && i_h < 240)
+      008ABA 7B 42            [ 1]  470 	ld	a, (0x42, sp)
+      008ABC A1 F0            [ 1]  471 	cp	a, #0xf0
+      008ABE 4F               [ 1]  472 	clr	a
+      008ABF 49               [ 1]  473 	rlc	a
+      008AC0 0D 01            [ 1]  474 	tnz	(0x01, sp)
+      008AC2 26 1A            [ 1]  475 	jrne	00110$
+      008AC4 4D               [ 1]  476 	tnz	a
+      008AC5 27 17            [ 1]  477 	jreq	00110$
+                                    478 ;	ws2812.c: 73: r = 0, g = X, b = C;
+      008AC7 5F               [ 1]  479 	clrw	x
+      008AC8 1F 1C            [ 2]  480 	ldw	(0x1c, sp), x
+      008ACA 1F 1A            [ 2]  481 	ldw	(0x1a, sp), x
+      008ACC 16 30            [ 2]  482 	ldw	y, (0x30, sp)
+      008ACE 17 28            [ 2]  483 	ldw	(0x28, sp), y
+      008AD0 16 2E            [ 2]  484 	ldw	y, (0x2e, sp)
+      008AD2 17 26            [ 2]  485 	ldw	(0x26, sp), y
+      008AD4 16 34            [ 2]  486 	ldw	y, (0x34, sp)
+      008AD6 17 24            [ 2]  487 	ldw	(0x24, sp), y
+      008AD8 16 32            [ 2]  488 	ldw	y, (0x32, sp)
+      008ADA 17 22            [ 2]  489 	ldw	(0x22, sp), y
+      008ADC 20 2F            [ 2]  490 	jra	00123$
+      008ADE                        491 00110$:
+                                    492 ;	ws2812.c: 75: else if(i_h >= 240 && i_h < 300)
+      008ADE 4D               [ 1]  493 	tnz	a
+      008ADF 26 17            [ 1]  494 	jrne	00106$
+                                    495 ;	ws2812.c: 77: r = X, g = 0, b = C;
+      008AE1 16 30            [ 2]  496 	ldw	y, (0x30, sp)
+      008AE3 17 1C            [ 2]  497 	ldw	(0x1c, sp), y
+      008AE5 16 2E            [ 2]  498 	ldw	y, (0x2e, sp)
+      008AE7 17 1A            [ 2]  499 	ldw	(0x1a, sp), y
+      008AE9 5F               [ 1]  500 	clrw	x
+      008AEA 1F 28            [ 2]  501 	ldw	(0x28, sp), x
+      008AEC 1F 26            [ 2]  502 	ldw	(0x26, sp), x
+      008AEE 16 34            [ 2]  503 	ldw	y, (0x34, sp)
+      008AF0 17 24            [ 2]  504 	ldw	(0x24, sp), y
+      008AF2 16 32            [ 2]  505 	ldw	y, (0x32, sp)
+      008AF4 17 22            [ 2]  506 	ldw	(0x22, sp), y
+      008AF6 20 15            [ 2]  507 	jra	00123$
+      008AF8                        508 00106$:
+                                    509 ;	ws2812.c: 81: r = C, g = 0, b = X;
+      008AF8 16 34            [ 2]  510 	ldw	y, (0x34, sp)
+      008AFA 17 1C            [ 2]  511 	ldw	(0x1c, sp), y
+      008AFC 16 32            [ 2]  512 	ldw	y, (0x32, sp)
+      008AFE 17 1A            [ 2]  513 	ldw	(0x1a, sp), y
+      008B00 5F               [ 1]  514 	clrw	x
+      008B01 1F 28            [ 2]  515 	ldw	(0x28, sp), x
+      008B03 1F 26            [ 2]  516 	ldw	(0x26, sp), x
+      008B05 16 30            [ 2]  517 	ldw	y, (0x30, sp)
+      008B07 17 24            [ 2]  518 	ldw	(0x24, sp), y
+      008B09 16 2E            [ 2]  519 	ldw	y, (0x2e, sp)
+      008B0B 17 22            [ 2]  520 	ldw	(0x22, sp), y
+      008B0D                        521 00123$:
+                                    522 ;	ws2812.c: 84: o_color->r = (r + m) * 255;
+      008B0D 1E 20            [ 2]  523 	ldw	x, (0x20, sp)
+      008B0F 89               [ 2]  524 	pushw	x
+      008B10 1E 20            [ 2]  525 	ldw	x, (0x20, sp)
+      008B12 89               [ 2]  526 	pushw	x
+      008B13 1E 20            [ 2]  527 	ldw	x, (0x20, sp)
+      008B15 89               [ 2]  528 	pushw	x
+      008B16 1E 20            [ 2]  529 	ldw	x, (0x20, sp)
+      008B18 89               [ 2]  530 	pushw	x
+      008B19 CD 91 D5         [ 4]  531 	call	___fsadd
+      008B1C 5B 08            [ 2]  532 	addw	sp, #8
+      008B1E 89               [ 2]  533 	pushw	x
+      008B1F 90 89            [ 2]  534 	pushw	y
+      008B21 5F               [ 1]  535 	clrw	x
+      008B22 89               [ 2]  536 	pushw	x
+      008B23 4B 7F            [ 1]  537 	push	#0x7f
+      008B25 4B 43            [ 1]  538 	push	#0x43
+      008B27 CD 8E 15         [ 4]  539 	call	___fsmul
+      008B2A 5B 08            [ 2]  540 	addw	sp, #8
+      008B2C 89               [ 2]  541 	pushw	x
+      008B2D 90 89            [ 2]  542 	pushw	y
+      008B2F CD 97 F6         [ 4]  543 	call	___fs2uchar
+      008B32 5B 04            [ 2]  544 	addw	sp, #4
+      008B34 1E 07            [ 2]  545 	ldw	x, (0x07, sp)
+      008B36 F7               [ 1]  546 	ld	(x), a
+                                    547 ;	ws2812.c: 85: o_color->g = (g + m) * 255;
+      008B37 1E 20            [ 2]  548 	ldw	x, (0x20, sp)
+      008B39 89               [ 2]  549 	pushw	x
+      008B3A 1E 20            [ 2]  550 	ldw	x, (0x20, sp)
+      008B3C 89               [ 2]  551 	pushw	x
+      008B3D 1E 2C            [ 2]  552 	ldw	x, (0x2c, sp)
+      008B3F 89               [ 2]  553 	pushw	x
+      008B40 1E 2C            [ 2]  554 	ldw	x, (0x2c, sp)
+      008B42 89               [ 2]  555 	pushw	x
+      008B43 CD 91 D5         [ 4]  556 	call	___fsadd
+      008B46 5B 08            [ 2]  557 	addw	sp, #8
+      008B48 89               [ 2]  558 	pushw	x
+      008B49 90 89            [ 2]  559 	pushw	y
+      008B4B 5F               [ 1]  560 	clrw	x
+      008B4C 89               [ 2]  561 	pushw	x
+      008B4D 4B 7F            [ 1]  562 	push	#0x7f
+      008B4F 4B 43            [ 1]  563 	push	#0x43
+      008B51 CD 8E 15         [ 4]  564 	call	___fsmul
+      008B54 5B 08            [ 2]  565 	addw	sp, #8
+      008B56 89               [ 2]  566 	pushw	x
+      008B57 90 89            [ 2]  567 	pushw	y
+      008B59 CD 97 F6         [ 4]  568 	call	___fs2uchar
+      008B5C 5B 04            [ 2]  569 	addw	sp, #4
+      008B5E 1E 12            [ 2]  570 	ldw	x, (0x12, sp)
+      008B60 F7               [ 1]  571 	ld	(x), a
+                                    572 ;	ws2812.c: 86: o_color->b = (b + m) * 255;
+      008B61 1E 20            [ 2]  573 	ldw	x, (0x20, sp)
+      008B63 89               [ 2]  574 	pushw	x
+      008B64 1E 20            [ 2]  575 	ldw	x, (0x20, sp)
+      008B66 89               [ 2]  576 	pushw	x
+      008B67 1E 28            [ 2]  577 	ldw	x, (0x28, sp)
+      008B69 89               [ 2]  578 	pushw	x
+      008B6A 1E 28            [ 2]  579 	ldw	x, (0x28, sp)
+      008B6C 89               [ 2]  580 	pushw	x
+      008B6D CD 91 D5         [ 4]  581 	call	___fsadd
+      008B70 5B 08            [ 2]  582 	addw	sp, #8
+      008B72 89               [ 2]  583 	pushw	x
+      008B73 90 89            [ 2]  584 	pushw	y
+      008B75 5F               [ 1]  585 	clrw	x
+      008B76 89               [ 2]  586 	pushw	x
+      008B77 4B 7F            [ 1]  587 	push	#0x7f
+      008B79 4B 43            [ 1]  588 	push	#0x43
+      008B7B CD 8E 15         [ 4]  589 	call	___fsmul
+      008B7E 5B 08            [ 2]  590 	addw	sp, #8
+      008B80 89               [ 2]  591 	pushw	x
+      008B81 90 89            [ 2]  592 	pushw	y
+      008B83 CD 97 F6         [ 4]  593 	call	___fs2uchar
+      008B86 5B 04            [ 2]  594 	addw	sp, #4
+      008B88 1E 18            [ 2]  595 	ldw	x, (0x18, sp)
+      008B8A F7               [ 1]  596 	ld	(x), a
+      008B8B                        597 00125$:
+                                    598 ;	ws2812.c: 87: }
+      008B8B 5B 3D            [ 2]  599 	addw	sp, #61
+      008B8D 81               [ 4]  600 	ret
+                                    601 ;	ws2812.c: 92: void WS2812_wait_spi_sr(void)
+                                    602 ;	-----------------------------------------
+                                    603 ;	 function WS2812_wait_spi_sr
+                                    604 ;	-----------------------------------------
+      008B8E                        605 _WS2812_wait_spi_sr:
+                                    606 ;	ws2812.c: 94: while ((SPI->SR & (uint8_t)SPI_FLAG_TXE) == (uint8_t)RESET)
+      008B8E                        607 00101$:
+      008B8E C6 52 03         [ 1]  608 	ld	a, 0x5203
+      008B91 A5 02            [ 1]  609 	bcp	a, #0x02
+      008B93 27 F9            [ 1]  610 	jreq	00101$
+                                    611 ;	ws2812.c: 96: }
+      008B95 81               [ 4]  612 	ret
+                                    613 ;	ws2812.c: 101: void WS2812_send_led_single(uint8_t r, uint8_t g, uint8_t b)
+                                    614 ;	-----------------------------------------
+                                    615 ;	 function WS2812_send_led_single
+                                    616 ;	-----------------------------------------
+      008B96                        617 _WS2812_send_led_single:
+                                    618 ;	ws2812.c: 105: SPI->DR = (g & (1 << 7)) ? WS_1 : WS_0;
+      008B96 0D 04            [ 1]  619 	tnz	(0x04, sp)
+      008B98 2A 04            [ 1]  620 	jrpl	00103$
+      008B9A AE 00 7C         [ 2]  621 	ldw	x, #0x007c
+      008B9D BC                     622 	.byte 0xbc
+      008B9E                        623 00103$:
+      008B9E AE 00 70         [ 2]  624 	ldw	x, #0x0070
+      008BA1                        625 00104$:
+      008BA1 9F               [ 1]  626 	ld	a, xl
+      008BA2 C7 52 04         [ 1]  627 	ld	0x5204, a
+                                    628 ;	ws2812.c: 106: WS2812_wait_spi_sr();
+      008BA5 CD 8B 8E         [ 4]  629 	call	_WS2812_wait_spi_sr
+                                    630 ;	ws2812.c: 107: SPI->DR = (g & (1 << 6)) ? WS_1 : WS_0;
+      008BA8 7B 04            [ 1]  631 	ld	a, (0x04, sp)
+      008BAA A5 40            [ 1]  632 	bcp	a, #0x40
+      008BAC 27 04            [ 1]  633 	jreq	00105$
+      008BAE AE 00 7C         [ 2]  634 	ldw	x, #0x007c
+      008BB1 BC                     635 	.byte 0xbc
+      008BB2                        636 00105$:
+      008BB2 AE 00 70         [ 2]  637 	ldw	x, #0x0070
+      008BB5                        638 00106$:
+      008BB5 9F               [ 1]  639 	ld	a, xl
+      008BB6 C7 52 04         [ 1]  640 	ld	0x5204, a
+                                    641 ;	ws2812.c: 108: WS2812_wait_spi_sr();
+      008BB9 CD 8B 8E         [ 4]  642 	call	_WS2812_wait_spi_sr
+                                    643 ;	ws2812.c: 109: SPI->DR = (g & (1 << 5)) ? WS_1 : WS_0;
+      008BBC 7B 04            [ 1]  644 	ld	a, (0x04, sp)
+      008BBE A5 20            [ 1]  645 	bcp	a, #0x20
+      008BC0 27 04            [ 1]  646 	jreq	00107$
+      008BC2 AE 00 7C         [ 2]  647 	ldw	x, #0x007c
+      008BC5 BC                     648 	.byte 0xbc
+      008BC6                        649 00107$:
+      008BC6 AE 00 70         [ 2]  650 	ldw	x, #0x0070
+      008BC9                        651 00108$:
+      008BC9 9F               [ 1]  652 	ld	a, xl
+      008BCA C7 52 04         [ 1]  653 	ld	0x5204, a
+                                    654 ;	ws2812.c: 110: WS2812_wait_spi_sr();
+      008BCD CD 8B 8E         [ 4]  655 	call	_WS2812_wait_spi_sr
+                                    656 ;	ws2812.c: 111: SPI->DR = (g & (1 << 4)) ? WS_1 : WS_0;
+      008BD0 7B 04            [ 1]  657 	ld	a, (0x04, sp)
+      008BD2 A5 10            [ 1]  658 	bcp	a, #0x10
+      008BD4 27 04            [ 1]  659 	jreq	00109$
+      008BD6 AE 00 7C         [ 2]  660 	ldw	x, #0x007c
+      008BD9 BC                     661 	.byte 0xbc
+      008BDA                        662 00109$:
+      008BDA AE 00 70         [ 2]  663 	ldw	x, #0x0070
+      008BDD                        664 00110$:
+      008BDD 9F               [ 1]  665 	ld	a, xl
+      008BDE C7 52 04         [ 1]  666 	ld	0x5204, a
+                                    667 ;	ws2812.c: 112: WS2812_wait_spi_sr();
+      008BE1 CD 8B 8E         [ 4]  668 	call	_WS2812_wait_spi_sr
+                                    669 ;	ws2812.c: 113: SPI->DR = (g & (1 << 3)) ? WS_1 : WS_0;
+      008BE4 7B 04            [ 1]  670 	ld	a, (0x04, sp)
+      008BE6 A5 08            [ 1]  671 	bcp	a, #0x08
+      008BE8 27 04            [ 1]  672 	jreq	00111$
+      008BEA AE 00 7C         [ 2]  673 	ldw	x, #0x007c
+      008BED BC                     674 	.byte 0xbc
+      008BEE                        675 00111$:
+      008BEE AE 00 70         [ 2]  676 	ldw	x, #0x0070
+      008BF1                        677 00112$:
+      008BF1 9F               [ 1]  678 	ld	a, xl
+      008BF2 C7 52 04         [ 1]  679 	ld	0x5204, a
+                                    680 ;	ws2812.c: 114: WS2812_wait_spi_sr();
+      008BF5 CD 8B 8E         [ 4]  681 	call	_WS2812_wait_spi_sr
+                                    682 ;	ws2812.c: 115: SPI->DR = (g & (1 << 2)) ? WS_1 : WS_0;
+      008BF8 7B 04            [ 1]  683 	ld	a, (0x04, sp)
+      008BFA A5 04            [ 1]  684 	bcp	a, #0x04
+      008BFC 27 04            [ 1]  685 	jreq	00113$
+      008BFE AE 00 7C         [ 2]  686 	ldw	x, #0x007c
+      008C01 BC                     687 	.byte 0xbc
+      008C02                        688 00113$:
+      008C02 AE 00 70         [ 2]  689 	ldw	x, #0x0070
+      008C05                        690 00114$:
+      008C05 9F               [ 1]  691 	ld	a, xl
+      008C06 C7 52 04         [ 1]  692 	ld	0x5204, a
+                                    693 ;	ws2812.c: 116: WS2812_wait_spi_sr();
+      008C09 CD 8B 8E         [ 4]  694 	call	_WS2812_wait_spi_sr
+                                    695 ;	ws2812.c: 117: SPI->DR = (g & (1 << 1)) ? WS_1 : WS_0;
+      008C0C 7B 04            [ 1]  696 	ld	a, (0x04, sp)
+      008C0E A5 02            [ 1]  697 	bcp	a, #0x02
+      008C10 27 04            [ 1]  698 	jreq	00115$
+      008C12 AE 00 7C         [ 2]  699 	ldw	x, #0x007c
+      008C15 BC                     700 	.byte 0xbc
+      008C16                        701 00115$:
+      008C16 AE 00 70         [ 2]  702 	ldw	x, #0x0070
+      008C19                        703 00116$:
+      008C19 9F               [ 1]  704 	ld	a, xl
+      008C1A C7 52 04         [ 1]  705 	ld	0x5204, a
+                                    706 ;	ws2812.c: 118: WS2812_wait_spi_sr();
+      008C1D CD 8B 8E         [ 4]  707 	call	_WS2812_wait_spi_sr
+                                    708 ;	ws2812.c: 119: SPI->DR = (g & 1) ? WS_1 : WS_0;
+      008C20 7B 04            [ 1]  709 	ld	a, (0x04, sp)
+      008C22 44               [ 1]  710 	srl	a
+      008C23 24 04            [ 1]  711 	jrnc	00117$
+      008C25 AE 00 7C         [ 2]  712 	ldw	x, #0x007c
+      008C28 BC                     713 	.byte 0xbc
+      008C29                        714 00117$:
+      008C29 AE 00 70         [ 2]  715 	ldw	x, #0x0070
+      008C2C                        716 00118$:
+      008C2C 9F               [ 1]  717 	ld	a, xl
+      008C2D C7 52 04         [ 1]  718 	ld	0x5204, a
+                                    719 ;	ws2812.c: 120: WS2812_wait_spi_sr();
+      008C30 CD 8B 8E         [ 4]  720 	call	_WS2812_wait_spi_sr
+                                    721 ;	ws2812.c: 122: SPI->DR = (r & (1 << 7)) ? WS_1 : WS_0;
+      008C33 0D 03            [ 1]  722 	tnz	(0x03, sp)
+      008C35 2A 04            [ 1]  723 	jrpl	00119$
+      008C37 AE 00 7C         [ 2]  724 	ldw	x, #0x007c
+      008C3A BC                     725 	.byte 0xbc
+      008C3B                        726 00119$:
+      008C3B AE 00 70         [ 2]  727 	ldw	x, #0x0070
+      008C3E                        728 00120$:
+      008C3E 9F               [ 1]  729 	ld	a, xl
+      008C3F C7 52 04         [ 1]  730 	ld	0x5204, a
+                                    731 ;	ws2812.c: 123: WS2812_wait_spi_sr();
+      008C42 CD 8B 8E         [ 4]  732 	call	_WS2812_wait_spi_sr
+                                    733 ;	ws2812.c: 124: SPI->DR = (r & (1 << 6)) ? WS_1 : WS_0;
+      008C45 7B 03            [ 1]  734 	ld	a, (0x03, sp)
+      008C47 A5 40            [ 1]  735 	bcp	a, #0x40
+      008C49 27 04            [ 1]  736 	jreq	00121$
+      008C4B AE 00 7C         [ 2]  737 	ldw	x, #0x007c
+      008C4E BC                     738 	.byte 0xbc
+      008C4F                        739 00121$:
+      008C4F AE 00 70         [ 2]  740 	ldw	x, #0x0070
+      008C52                        741 00122$:
+      008C52 9F               [ 1]  742 	ld	a, xl
+      008C53 C7 52 04         [ 1]  743 	ld	0x5204, a
+                                    744 ;	ws2812.c: 125: WS2812_wait_spi_sr();
+      008C56 CD 8B 8E         [ 4]  745 	call	_WS2812_wait_spi_sr
+                                    746 ;	ws2812.c: 126: SPI->DR = (r & (1 << 5)) ? WS_1 : WS_0;
+      008C59 7B 03            [ 1]  747 	ld	a, (0x03, sp)
+      008C5B A5 20            [ 1]  748 	bcp	a, #0x20
+      008C5D 27 04            [ 1]  749 	jreq	00123$
+      008C5F AE 00 7C         [ 2]  750 	ldw	x, #0x007c
+      008C62 BC                     751 	.byte 0xbc
+      008C63                        752 00123$:
+      008C63 AE 00 70         [ 2]  753 	ldw	x, #0x0070
+      008C66                        754 00124$:
+      008C66 9F               [ 1]  755 	ld	a, xl
+      008C67 C7 52 04         [ 1]  756 	ld	0x5204, a
+                                    757 ;	ws2812.c: 127: WS2812_wait_spi_sr();
+      008C6A CD 8B 8E         [ 4]  758 	call	_WS2812_wait_spi_sr
+                                    759 ;	ws2812.c: 128: SPI->DR = (r & (1 << 4)) ? WS_1 : WS_0;
+      008C6D 7B 03            [ 1]  760 	ld	a, (0x03, sp)
+      008C6F A5 10            [ 1]  761 	bcp	a, #0x10
+      008C71 27 04            [ 1]  762 	jreq	00125$
+      008C73 AE 00 7C         [ 2]  763 	ldw	x, #0x007c
+      008C76 BC                     764 	.byte 0xbc
+      008C77                        765 00125$:
+      008C77 AE 00 70         [ 2]  766 	ldw	x, #0x0070
+      008C7A                        767 00126$:
+      008C7A 9F               [ 1]  768 	ld	a, xl
+      008C7B C7 52 04         [ 1]  769 	ld	0x5204, a
+                                    770 ;	ws2812.c: 129: WS2812_wait_spi_sr();
+      008C7E CD 8B 8E         [ 4]  771 	call	_WS2812_wait_spi_sr
+                                    772 ;	ws2812.c: 130: SPI->DR = (r & (1 << 3)) ? WS_1 : WS_0;
+      008C81 7B 03            [ 1]  773 	ld	a, (0x03, sp)
+      008C83 A5 08            [ 1]  774 	bcp	a, #0x08
+      008C85 27 04            [ 1]  775 	jreq	00127$
+      008C87 AE 00 7C         [ 2]  776 	ldw	x, #0x007c
+      008C8A BC                     777 	.byte 0xbc
+      008C8B                        778 00127$:
+      008C8B AE 00 70         [ 2]  779 	ldw	x, #0x0070
+      008C8E                        780 00128$:
+      008C8E 9F               [ 1]  781 	ld	a, xl
+      008C8F C7 52 04         [ 1]  782 	ld	0x5204, a
+                                    783 ;	ws2812.c: 131: WS2812_wait_spi_sr();
+      008C92 CD 8B 8E         [ 4]  784 	call	_WS2812_wait_spi_sr
+                                    785 ;	ws2812.c: 132: SPI->DR = (r & (1 << 2)) ? WS_1 : WS_0;
+      008C95 7B 03            [ 1]  786 	ld	a, (0x03, sp)
+      008C97 A5 04            [ 1]  787 	bcp	a, #0x04
+      008C99 27 04            [ 1]  788 	jreq	00129$
+      008C9B AE 00 7C         [ 2]  789 	ldw	x, #0x007c
+      008C9E BC                     790 	.byte 0xbc
+      008C9F                        791 00129$:
+      008C9F AE 00 70         [ 2]  792 	ldw	x, #0x0070
+      008CA2                        793 00130$:
+      008CA2 9F               [ 1]  794 	ld	a, xl
+      008CA3 C7 52 04         [ 1]  795 	ld	0x5204, a
+                                    796 ;	ws2812.c: 133: WS2812_wait_spi_sr();
+      008CA6 CD 8B 8E         [ 4]  797 	call	_WS2812_wait_spi_sr
+                                    798 ;	ws2812.c: 134: SPI->DR = (r & (1 << 1)) ? WS_1 : WS_0;
+      008CA9 7B 03            [ 1]  799 	ld	a, (0x03, sp)
+      008CAB A5 02            [ 1]  800 	bcp	a, #0x02
+      008CAD 27 04            [ 1]  801 	jreq	00131$
+      008CAF AE 00 7C         [ 2]  802 	ldw	x, #0x007c
+      008CB2 BC                     803 	.byte 0xbc
+      008CB3                        804 00131$:
+      008CB3 AE 00 70         [ 2]  805 	ldw	x, #0x0070
+      008CB6                        806 00132$:
+      008CB6 9F               [ 1]  807 	ld	a, xl
+      008CB7 C7 52 04         [ 1]  808 	ld	0x5204, a
+                                    809 ;	ws2812.c: 135: WS2812_wait_spi_sr();
+      008CBA CD 8B 8E         [ 4]  810 	call	_WS2812_wait_spi_sr
+                                    811 ;	ws2812.c: 136: SPI->DR = (r & 1) ? WS_1 : WS_0;
+      008CBD 7B 03            [ 1]  812 	ld	a, (0x03, sp)
+      008CBF 44               [ 1]  813 	srl	a
+      008CC0 24 04            [ 1]  814 	jrnc	00133$
+      008CC2 AE 00 7C         [ 2]  815 	ldw	x, #0x007c
+      008CC5 BC                     816 	.byte 0xbc
+      008CC6                        817 00133$:
+      008CC6 AE 00 70         [ 2]  818 	ldw	x, #0x0070
+      008CC9                        819 00134$:
+      008CC9 9F               [ 1]  820 	ld	a, xl
+      008CCA C7 52 04         [ 1]  821 	ld	0x5204, a
+                                    822 ;	ws2812.c: 137: WS2812_wait_spi_sr();
+      008CCD CD 8B 8E         [ 4]  823 	call	_WS2812_wait_spi_sr
+                                    824 ;	ws2812.c: 139: SPI->DR = (b & (1 << 7)) ? WS_1 : WS_0;
+      008CD0 0D 05            [ 1]  825 	tnz	(0x05, sp)
+      008CD2 2A 04            [ 1]  826 	jrpl	00135$
+      008CD4 AE 00 7C         [ 2]  827 	ldw	x, #0x007c
+      008CD7 BC                     828 	.byte 0xbc
+      008CD8                        829 00135$:
+      008CD8 AE 00 70         [ 2]  830 	ldw	x, #0x0070
+      008CDB                        831 00136$:
+      008CDB 9F               [ 1]  832 	ld	a, xl
+      008CDC C7 52 04         [ 1]  833 	ld	0x5204, a
+                                    834 ;	ws2812.c: 140: WS2812_wait_spi_sr();
+      008CDF CD 8B 8E         [ 4]  835 	call	_WS2812_wait_spi_sr
+                                    836 ;	ws2812.c: 141: SPI->DR = (b & (1 << 6)) ? WS_1 : WS_0;
+      008CE2 7B 05            [ 1]  837 	ld	a, (0x05, sp)
+      008CE4 A5 40            [ 1]  838 	bcp	a, #0x40
+      008CE6 27 04            [ 1]  839 	jreq	00137$
+      008CE8 AE 00 7C         [ 2]  840 	ldw	x, #0x007c
+      008CEB BC                     841 	.byte 0xbc
+      008CEC                        842 00137$:
+      008CEC AE 00 70         [ 2]  843 	ldw	x, #0x0070
+      008CEF                        844 00138$:
+      008CEF 9F               [ 1]  845 	ld	a, xl
+      008CF0 C7 52 04         [ 1]  846 	ld	0x5204, a
+                                    847 ;	ws2812.c: 142: WS2812_wait_spi_sr();
+      008CF3 CD 8B 8E         [ 4]  848 	call	_WS2812_wait_spi_sr
+                                    849 ;	ws2812.c: 143: SPI->DR = (b & (1 << 5)) ? WS_1 : WS_0;
+      008CF6 7B 05            [ 1]  850 	ld	a, (0x05, sp)
+      008CF8 A5 20            [ 1]  851 	bcp	a, #0x20
+      008CFA 27 04            [ 1]  852 	jreq	00139$
+      008CFC AE 00 7C         [ 2]  853 	ldw	x, #0x007c
+      008CFF BC                     854 	.byte 0xbc
+      008D00                        855 00139$:
+      008D00 AE 00 70         [ 2]  856 	ldw	x, #0x0070
+      008D03                        857 00140$:
+      008D03 9F               [ 1]  858 	ld	a, xl
+      008D04 C7 52 04         [ 1]  859 	ld	0x5204, a
+                                    860 ;	ws2812.c: 144: WS2812_wait_spi_sr();
+      008D07 CD 8B 8E         [ 4]  861 	call	_WS2812_wait_spi_sr
+                                    862 ;	ws2812.c: 145: SPI->DR = (b & (1 << 4)) ? WS_1 : WS_0;
+      008D0A 7B 05            [ 1]  863 	ld	a, (0x05, sp)
+      008D0C A5 10            [ 1]  864 	bcp	a, #0x10
+      008D0E 27 04            [ 1]  865 	jreq	00141$
+      008D10 AE 00 7C         [ 2]  866 	ldw	x, #0x007c
+      008D13 BC                     867 	.byte 0xbc
+      008D14                        868 00141$:
+      008D14 AE 00 70         [ 2]  869 	ldw	x, #0x0070
+      008D17                        870 00142$:
+      008D17 9F               [ 1]  871 	ld	a, xl
+      008D18 C7 52 04         [ 1]  872 	ld	0x5204, a
+                                    873 ;	ws2812.c: 146: WS2812_wait_spi_sr();
+      008D1B CD 8B 8E         [ 4]  874 	call	_WS2812_wait_spi_sr
+                                    875 ;	ws2812.c: 147: SPI->DR = (b & (1 << 3)) ? WS_1 : WS_0;
+      008D1E 7B 05            [ 1]  876 	ld	a, (0x05, sp)
+      008D20 A5 08            [ 1]  877 	bcp	a, #0x08
+      008D22 27 04            [ 1]  878 	jreq	00143$
+      008D24 AE 00 7C         [ 2]  879 	ldw	x, #0x007c
+      008D27 BC                     880 	.byte 0xbc
+      008D28                        881 00143$:
+      008D28 AE 00 70         [ 2]  882 	ldw	x, #0x0070
+      008D2B                        883 00144$:
+      008D2B 9F               [ 1]  884 	ld	a, xl
+      008D2C C7 52 04         [ 1]  885 	ld	0x5204, a
+                                    886 ;	ws2812.c: 148: WS2812_wait_spi_sr();
+      008D2F CD 8B 8E         [ 4]  887 	call	_WS2812_wait_spi_sr
+                                    888 ;	ws2812.c: 149: SPI->DR = (b & (1 << 2)) ? WS_1 : WS_0;
+      008D32 7B 05            [ 1]  889 	ld	a, (0x05, sp)
+      008D34 A5 04            [ 1]  890 	bcp	a, #0x04
+      008D36 27 04            [ 1]  891 	jreq	00145$
+      008D38 AE 00 7C         [ 2]  892 	ldw	x, #0x007c
+      008D3B BC                     893 	.byte 0xbc
+      008D3C                        894 00145$:
+      008D3C AE 00 70         [ 2]  895 	ldw	x, #0x0070
+      008D3F                        896 00146$:
+      008D3F 9F               [ 1]  897 	ld	a, xl
+      008D40 C7 52 04         [ 1]  898 	ld	0x5204, a
+                                    899 ;	ws2812.c: 150: WS2812_wait_spi_sr();
+      008D43 CD 8B 8E         [ 4]  900 	call	_WS2812_wait_spi_sr
+                                    901 ;	ws2812.c: 151: SPI->DR = (b & (1 << 1)) ? WS_1 : WS_0;
+      008D46 7B 05            [ 1]  902 	ld	a, (0x05, sp)
+      008D48 A5 02            [ 1]  903 	bcp	a, #0x02
+      008D4A 27 04            [ 1]  904 	jreq	00147$
+      008D4C AE 00 7C         [ 2]  905 	ldw	x, #0x007c
+      008D4F BC                     906 	.byte 0xbc
+      008D50                        907 00147$:
+      008D50 AE 00 70         [ 2]  908 	ldw	x, #0x0070
+      008D53                        909 00148$:
+      008D53 9F               [ 1]  910 	ld	a, xl
+      008D54 C7 52 04         [ 1]  911 	ld	0x5204, a
+                                    912 ;	ws2812.c: 152: WS2812_wait_spi_sr();
+      008D57 CD 8B 8E         [ 4]  913 	call	_WS2812_wait_spi_sr
+                                    914 ;	ws2812.c: 153: SPI->DR = (b & 1) ? WS_1 : WS_0;
+      008D5A 7B 05            [ 1]  915 	ld	a, (0x05, sp)
+      008D5C 44               [ 1]  916 	srl	a
+      008D5D 24 05            [ 1]  917 	jrnc	00149$
+      008D5F AE 00 7C         [ 2]  918 	ldw	x, #0x007c
+      008D62 20 03            [ 2]  919 	jra	00150$
+      008D64                        920 00149$:
+      008D64 AE 00 70         [ 2]  921 	ldw	x, #0x0070
+      008D67                        922 00150$:
+      008D67 9F               [ 1]  923 	ld	a, xl
+      008D68 C7 52 04         [ 1]  924 	ld	0x5204, a
+                                    925 ;	ws2812.c: 154: WS2812_wait_spi_sr();
+                                    926 ;	ws2812.c: 160: }
+      008D6B CC 8B 8E         [ 2]  927 	jp	_WS2812_wait_spi_sr
+                                    928 ;	ws2812.c: 165: void WS2812_send_led_rgb_array()
+                                    929 ;	-----------------------------------------
+                                    930 ;	 function WS2812_send_led_rgb_array
+                                    931 ;	-----------------------------------------
+      008D6E                        932 _WS2812_send_led_rgb_array:
+      008D6E 89               [ 2]  933 	pushw	x
+                                    934 ;	ws2812.c: 168: for (i = 0; i < NB_LEDS; i++)
+      008D6F 0F 01            [ 1]  935 	clr	(0x01, sp)
+      008D71                        936 00102$:
+                                    937 ;	ws2812.c: 170: WS2812_send_led_single(g_leds_matrix[i].r, g_leds_matrix[i].g, g_leds_matrix[i].b);
+      008D71 7B 01            [ 1]  938 	ld	a, (0x01, sp)
+      008D73 97               [ 1]  939 	ld	xl, a
+      008D74 A6 03            [ 1]  940 	ld	a, #0x03
+      008D76 42               [ 4]  941 	mul	x, a
+      008D77 1C 00 0C         [ 2]  942 	addw	x, #_g_leds_matrix
+      008D7A 51               [ 1]  943 	exgw	x, y
+      008D7B 93               [ 1]  944 	ldw	x, y
+      008D7C E6 02            [ 1]  945 	ld	a, (0x2, x)
+      008D7E 6B 02            [ 1]  946 	ld	(0x02, sp), a
+      008D80 93               [ 1]  947 	ldw	x, y
+      008D81 E6 01            [ 1]  948 	ld	a, (0x1, x)
+      008D83 97               [ 1]  949 	ld	xl, a
+      008D84 90 F6            [ 1]  950 	ld	a, (y)
+      008D86 95               [ 1]  951 	ld	xh, a
+      008D87 7B 02            [ 1]  952 	ld	a, (0x02, sp)
+      008D89 88               [ 1]  953 	push	a
+      008D8A 9F               [ 1]  954 	ld	a, xl
+      008D8B 88               [ 1]  955 	push	a
+      008D8C 9E               [ 1]  956 	ld	a, xh
+      008D8D 88               [ 1]  957 	push	a
+      008D8E CD 8B 96         [ 4]  958 	call	_WS2812_send_led_single
+      008D91 5B 03            [ 2]  959 	addw	sp, #3
+                                    960 ;	ws2812.c: 168: for (i = 0; i < NB_LEDS; i++)
+      008D93 0C 01            [ 1]  961 	inc	(0x01, sp)
+      008D95 7B 01            [ 1]  962 	ld	a, (0x01, sp)
+      008D97 A1 40            [ 1]  963 	cp	a, #0x40
+      008D99 25 D6            [ 1]  964 	jrc	00102$
+                                    965 ;	ws2812.c: 172: delay_10us(10); /* RET code 100us */
+      008D9B 4B 0A            [ 1]  966 	push	#0x0a
+      008D9D 4B 00            [ 1]  967 	push	#0x00
+      008D9F CD 87 AF         [ 4]  968 	call	_delay_10us
+                                    969 ;	ws2812.c: 173: }
+      008DA2 5B 04            [ 2]  970 	addw	sp, #4
+      008DA4 81               [ 4]  971 	ret
+                                    972 ;	ws2812.c: 178: void WS2812_clear()
+                                    973 ;	-----------------------------------------
+                                    974 ;	 function WS2812_clear
+                                    975 ;	-----------------------------------------
+      008DA5                        976 _WS2812_clear:
+      008DA5 88               [ 1]  977 	push	a
+                                    978 ;	ws2812.c: 183: for (i = 0; i < NB_LEDS; i++)
+      008DA6 4F               [ 1]  979 	clr	a
+      008DA7 97               [ 1]  980 	ld	xl, a
+                                    981 ;	ws2812.c: 185: for (j = 0; j < 24; j++)
+      008DA8                        982 00114$:
+      008DA8 0F 01            [ 1]  983 	clr	(0x01, sp)
+      008DAA                        984 00106$:
+                                    985 ;	ws2812.c: 187: SPI->DR = WS_0;
+      008DAA 35 70 52 04      [ 1]  986 	mov	0x5204+0, #0x70
+                                    987 ;	ws2812.c: 188: while ((SPI->SR & (uint8_t)SPI_FLAG_TXE) == (uint8_t)RESET)
+      008DAE                        988 00101$:
+      008DAE C6 52 03         [ 1]  989 	ld	a, 0x5203
+      008DB1 A5 02            [ 1]  990 	bcp	a, #0x02
+      008DB3 27 F9            [ 1]  991 	jreq	00101$
+                                    992 ;	ws2812.c: 185: for (j = 0; j < 24; j++)
+      008DB5 0C 01            [ 1]  993 	inc	(0x01, sp)
+      008DB7 7B 01            [ 1]  994 	ld	a, (0x01, sp)
+      008DB9 A1 18            [ 1]  995 	cp	a, #0x18
+      008DBB 25 ED            [ 1]  996 	jrc	00106$
+                                    997 ;	ws2812.c: 183: for (i = 0; i < NB_LEDS; i++)
+      008DBD 5C               [ 1]  998 	incw	x
+      008DBE 9F               [ 1]  999 	ld	a, xl
+      008DBF A1 40            [ 1] 1000 	cp	a, #0x40
+      008DC1 25 E5            [ 1] 1001 	jrc	00114$
+                                   1002 ;	ws2812.c: 193: delay_10us(10); /* RET code 100 us */
+      008DC3 4B 0A            [ 1] 1003 	push	#0x0a
+      008DC5 4B 00            [ 1] 1004 	push	#0x00
+      008DC7 CD 87 AF         [ 4] 1005 	call	_delay_10us
+                                   1006 ;	ws2812.c: 194: }
+      008DCA 5B 03            [ 2] 1007 	addw	sp, #3
+      008DCC 81               [ 4] 1008 	ret
+                                   1009 ;	ws2812.c: 199: void WS2812_plain_color_fill(uint8_t r, uint8_t g, uint8_t b)
+                                   1010 ;	-----------------------------------------
+                                   1011 ;	 function WS2812_plain_color_fill
+                                   1012 ;	-----------------------------------------
+      008DCD                       1013 _WS2812_plain_color_fill:
+      008DCD 88               [ 1] 1014 	push	a
+                                   1015 ;	ws2812.c: 201: for (uint8_t i = 0; i < NB_LEDS; i++)
+      008DCE 0F 01            [ 1] 1016 	clr	(0x01, sp)
+      008DD0                       1017 00103$:
+      008DD0 7B 01            [ 1] 1018 	ld	a, (0x01, sp)
+      008DD2 A1 40            [ 1] 1019 	cp	a, #0x40
+      008DD4 24 12            [ 1] 1020 	jrnc	00101$
+                                   1021 ;	ws2812.c: 203: WS2812_send_led_single(r, g, b);
+      008DD6 7B 06            [ 1] 1022 	ld	a, (0x06, sp)
+      008DD8 88               [ 1] 1023 	push	a
+      008DD9 7B 06            [ 1] 1024 	ld	a, (0x06, sp)
+      008DDB 88               [ 1] 1025 	push	a
+      008DDC 7B 06            [ 1] 1026 	ld	a, (0x06, sp)
+      008DDE 88               [ 1] 1027 	push	a
+      008DDF CD 8B 96         [ 4] 1028 	call	_WS2812_send_led_single
+      008DE2 5B 03            [ 2] 1029 	addw	sp, #3
+                                   1030 ;	ws2812.c: 201: for (uint8_t i = 0; i < NB_LEDS; i++)
+      008DE4 0C 01            [ 1] 1031 	inc	(0x01, sp)
+      008DE6 20 E8            [ 2] 1032 	jra	00103$
+      008DE8                       1033 00101$:
+                                   1034 ;	ws2812.c: 206: delay_10us(10); /* RET code 100 us */
+      008DE8 4B 0A            [ 1] 1035 	push	#0x0a
+      008DEA 4B 00            [ 1] 1036 	push	#0x00
+      008DEC CD 87 AF         [ 4] 1037 	call	_delay_10us
+                                   1038 ;	ws2812.c: 207: }
+      008DEF 5B 03            [ 2] 1039 	addw	sp, #3
+      008DF1 81               [ 4] 1040 	ret
+                                   1041 	.area CODE
+                                   1042 	.area CONST
+                                   1043 	.area INITIALIZER
+                                   1044 	.area CABS (ABS)

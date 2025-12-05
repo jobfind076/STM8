@@ -1,0 +1,52 @@
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 1.
+Hexadecimal [24-Bits]
+
+Symbol Table
+
+    .__.$$$.                                                    =  002710 L
+    .__.ABS.                                                    =  000000 G
+    .__.CPU.                                                    =  000000 L
+    .__.H$L.                                                    =  000001 L
+    _CLK_GetClockFreq                                              ****** GX
+    _I2C_CheckEvent                                                ****** GX
+    _I2C_GenerateSTART                                             ****** GX
+    _I2C_GenerateSTOP                                              ****** GX
+    _I2C_Init                                                      ****** GX
+    _I2C_Send7bitAddress                                           ****** GX
+    _I2C_SendData                                                  ****** GX
+    __divslong                                                     ****** GX
+    __divulong                                                     ****** GX
+    __modslong                                                     ****** GX
+    _delay_ms                                                      ****** GX
+  1 _g_pcf_status                                                  000000 R
+  9 _lcd_PCF7584_write                                             000042 GR
+  9 _lcd_PCF7584_write8                                            000000 GR
+  9 _lcd_bl_off                                                    0002FA GR
+  9 _lcd_bl_on                                                     0002F1 GR
+  9 _lcd_clear                                                     000194 GR
+  9 _lcd_cmd                                                       0000D7 GR
+  9 _lcd_init                                                      0000FF GR
+  9 _lcd_print_char                                                0001DB GR
+  9 _lcd_print_integer                                             000251 GR
+  9 _lcd_print_string                                              000231 GR
+  9 _lcd_set_bit                                                   000071 GR
+  9 _lcd_set_cursor                                                0001A1 GR
+
+
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (STMicroelectronics STM8), page 2.
+Hexadecimal [24-Bits]
+
+Area Table
+
+   0 _CODE                                      size      0   flags    0
+   1 DATA                                       size      1   flags    0
+   2 INITIALIZED                                size      0   flags    0
+   3 DABS                                       size      0   flags    8
+   4 HOME                                       size      0   flags    0
+   5 GSINIT                                     size      0   flags    0
+   6 GSFINAL                                    size      0   flags    0
+   7 CONST                                      size      0   flags    0
+   8 INITIALIZER                                size      0   flags    0
+   9 CODE                                       size    303   flags    0
+   A CABS                                       size      0   flags    8
+

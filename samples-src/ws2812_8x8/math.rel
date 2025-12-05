@@ -1,0 +1,36 @@
+XH3
+H B areas 7 global symbols
+M math
+O -mstm8
+S ___fssub Ref000000
+S ___fsmul Ref000000
+S .__.ABS. Def000000
+S ___uint2fs Ref000000
+S ___fs2uint Ref000000
+S ___fsdiv Ref000000
+A _CODE size 0 flags 0 addr 0
+A DATA size 0 flags 0 addr 0
+A INITIALIZED size 0 flags 0 addr 0
+A DABS size 0 flags 8 addr 0
+A HOME size 0 flags 0 addr 0
+A GSINIT size 0 flags 0 addr 0
+A GSFINAL size 0 flags 0 addr 0
+A CONST size 0 flags 0 addr 0
+A INITIALIZER size 0 flags 0 addr 0
+A CODE size 46 flags 0 addr 0
+S _fmod Def000000
+A CABS size 0 flags 8 addr 0
+T 00 00 00
+R 00 00 00 09
+T 00 00 00 52 08 1E 0D 89 1E 0D 89 CD 00 00 5B 04
+R 00 00 00 09 02 0C 00 04
+T 00 00 0D 89 CD 00 00 5B 02 1F 07 1E 11 89 1E 11
+R 00 00 00 09 02 05 00 03
+T 00 00 1A 89 1E 0B 89 90 89 CD 00 00 5B 08 1F 03
+R 00 00 00 09 02 0A 00 05
+T 00 00 27 1E 11 89 1E 11 89 1E 07 89 90 89 CD
+R 00 00 00 09
+T 00 00 33 00 00 5B 08 89 90 89 1E 11 89 1E 11 89
+R 00 00 00 09 02 03 00 01
+T 00 00 40 CD 00 00 5B 10 81
+R 00 00 00 09 02 04 00 00
