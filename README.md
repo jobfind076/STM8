@@ -85,6 +85,6 @@ $ sdcc -lstm8 -mstm8 --opt-code-size --out-fmt-ihx test.c
 -----
 
 ### Контакты
-Telegram: @any_day_you_like
+Telegram: @any_day_you_like2
 
 декабрь 2025
